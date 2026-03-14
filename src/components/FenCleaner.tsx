@@ -2,6 +2,10 @@
 
 import { useState } from "react"
 
+function hasPawn(fen:string){
+  return fen.includes("p") || fen.includes("P")
+}
+
 function removePawns(fen:string){
 
   const parts = fen.split(" ")
@@ -24,7 +28,7 @@ function removePawns(fen:string){
 
         }else{
 
-          if(empty>0){
+          if(empty > 0){
             result += empty
             empty = 0
           }
@@ -34,7 +38,7 @@ function removePawns(fen:string){
 
       }
 
-      if(empty>0) result += empty
+      if(empty > 0) result += empty
 
       return result || "8"
 
@@ -49,22 +53,42 @@ function removePawns(fen:string){
 
 export function FenCleaner(){
 
-  const [fen,setFen] = useState("")
-  const [removePawn,setRemovePawn] = useState(false)
-  const [result,setResult] = useState("")
+  const [input,setInput] = useState("")
+  const [rows,setRows]:any = useState([])
+  const [removePawn,setRemovePawn] = useState(true)
 
+  function process(){
 
-  function processFen(){
+    const lines = input.split("\n")
 
-    if(!fen) return
+    const result:any = []
 
-    let output = fen
+    lines.forEach(line => {
 
-    if(removePawn){
-      output = removePawns(fen)
-    }
+      if(!line.trim()) return
 
-    setResult(output)
+      const parts = line.trim().split(/\s+/)
+
+      const id = parts[0]
+
+      const fen = parts.slice(1).join(" ")
+
+      if(removePawn){
+
+        if(!hasPawn(fen)) return   // ignore if no pawns
+
+        const newFen = removePawns(fen)
+
+        result.push({
+          id,
+          fen:newFen
+        })
+
+      }
+
+    })
+
+    setRows(result)
 
   }
 
@@ -73,16 +97,15 @@ export function FenCleaner(){
 <div className="space-y-6 mt-10">
 
 <h1 className="text-2xl font-bold">
-FEN Cleaner
+Bulk FEN Pawn Remover
 </h1>
 
 <textarea
-className="w-full border p-3 rounded"
-placeholder="Paste FEN here..."
-value={fen}
-onChange={e=>setFen(e.target.value)}
+className="w-full h-40 border p-3 rounded"
+placeholder="Paste ID and FEN"
+value={input}
+onChange={(e)=>setInput(e.target.value)}
 />
-
 
 <label className="flex items-center gap-2">
 
@@ -96,30 +119,47 @@ Remove all pawns
 
 </label>
 
-
 <button
-onClick={processFen}
+onClick={process}
 className="bg-black text-white px-4 py-2 rounded"
 >
-Clean FEN
+Process
 </button>
 
 
-{result && (
+<div className="overflow-x-auto">
 
-<div className="border p-3 rounded bg-gray-50">
+<table className="w-full border">
 
-<div className="font-semibold mb-2">
-Result FEN
+<thead className="bg-gray-200">
+
+<tr>
+
+<th className="p-2">ID</th>
+<th>FEN without pawns</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{rows.map((r:any,i:number)=>(
+
+<tr key={i} className="border-t">
+
+<td className="p-2">{r.id}</td>
+<td className="text-xs">{r.fen}</td>
+
+</tr>
+
+))}
+
+</tbody>
+
+</table>
+
 </div>
-
-<div className="text-sm break-all">
-{result}
-</div>
-
-</div>
-
-)}
 
 </div>
 
