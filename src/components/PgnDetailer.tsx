@@ -10,7 +10,6 @@ const INITIAL_FEN =
 function parseHeaders(pgn:string){
 
   const headers:any = {}
-
   const regex = /\[(\w+)\s+"([^"]*)"\]/g
 
   let match
@@ -31,10 +30,11 @@ function splitGames(text:string){
 }
 
 
-function removeBlackPiecesFromFen(fen:string){
+/* remove ALL black pieces */
+
+function removeBlackPieces(fen:string){
 
   const parts = fen.split(" ")
-
   const placement = parts[0]
 
   const cleaned = placement
@@ -54,16 +54,16 @@ function removeBlackPiecesFromFen(fen:string){
 
         }else{
 
-          if(empty > 0){
-            result += empty
-            empty = 0
+          if(empty>0){
+            result+=empty
+            empty=0
           }
 
-          result += ch
+          result+=ch
         }
       }
 
-      if(empty > 0) result += empty
+      if(empty>0) result+=empty
 
       return result || "8"
 
@@ -74,6 +74,53 @@ function removeBlackPiecesFromFen(fen:string){
 
   return parts.join(" ")
 }
+
+
+/* remove ONLY black pawns */
+
+function removeBlackPawns(fen:string){
+
+  const parts = fen.split(" ")
+  const placement = parts[0]
+
+  const cleaned = placement
+    .split("/")
+    .map(rank => {
+
+      let empty = 0
+      let result = ""
+
+      for(const ch of rank){
+
+        if(/\d/.test(ch)){
+          empty += parseInt(ch)
+
+        }else if(ch === "p"){
+          empty++
+
+        }else{
+
+          if(empty>0){
+            result+=empty
+            empty=0
+          }
+
+          result+=ch
+        }
+      }
+
+      if(empty>0) result+=empty
+
+      return result || "8"
+
+    })
+    .join("/")
+
+  parts[0] = cleaned
+
+  return parts.join(" ")
+}
+
 
 
 export function PgnDetailer(){
@@ -106,13 +153,17 @@ export function PgnDetailer(){
         INITIAL_FEN
 
       const fenNoBlack =
-        removeBlackPiecesFromFen(fen)
+        removeBlackPieces(fen)
+
+      const fenNoBlackPawns =
+        removeBlackPawns(fen)
 
       return{
         title,
         chapter,
         fen,
-        fenNoBlack
+        fenNoBlack,
+        fenNoBlackPawns
       }
 
     })
@@ -121,29 +172,40 @@ export function PgnDetailer(){
   }
 
 
-  function downloadExcel(){
 
-    const data = [
-      ["Title","Chapter","FEN","FEN without black pieces"],
-      ...rows.map((r:any)=>[
-        r.title,
-        r.chapter,
-        r.fen,
-        r.fenNoBlack
-      ])
-    ]
+function downloadExcel(){
 
-    const ws = XLSX.utils.aoa_to_sheet(data)
+const data = [
+[
+"Title",
+"Chapter",
+"FEN",
+"FEN without black pieces",
+"FEN without black pawns"
+],
 
-    const wb = XLSX.utils.book_new()
+...rows.map((r:any)=>[
+r.title,
+r.chapter,
+r.fen,
+r.fenNoBlack,
+r.fenNoBlackPawns
+])
 
-    XLSX.utils.book_append_sheet(wb,ws,"PGN")
+]
 
-    XLSX.writeFile(wb,"pgn_output.xlsx")
-  }
+const ws = XLSX.utils.aoa_to_sheet(data)
+const wb = XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb,ws,"PGN")
+
+XLSX.writeFile(wb,"pgn_output.xlsx")
+
+}
 
 
-  return(
+
+return(
 
 <div className="space-y-6">
 
@@ -193,6 +255,7 @@ Download Excel
 <th>Chapter</th>
 <th>FEN</th>
 <th>FEN without black pieces</th>
+<th>FEN without black pawns</th>
 
 </tr>
 
@@ -209,6 +272,7 @@ Download Excel
 <td>{r.chapter}</td>
 <td className="text-xs">{r.fen}</td>
 <td className="text-xs">{r.fenNoBlack}</td>
+<td className="text-xs">{r.fenNoBlackPawns}</td>
 
 </tr>
 
@@ -222,5 +286,6 @@ Download Excel
 
 </div>
 
-  )
+)
+
 }
