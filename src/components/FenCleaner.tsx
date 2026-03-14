@@ -59,38 +59,37 @@ export function FenCleaner(){
 
   function process(){
 
-    const lines = input.split("\n")
+  const lines = input.split("\n")
+  const result:any = []
 
-    const result:any = []
+  lines.forEach(line => {
 
-    lines.forEach(line => {
+    if(!line.trim()) return
 
-      if(!line.trim()) return
+    const firstSpace = line.indexOf(" ")
 
-      const parts = line.trim().split(/\s+/)
+    if(firstSpace === -1) return
 
-      const id = parts[0]
+    const id = line.substring(0, firstSpace).trim()
+    const fen = line.substring(firstSpace + 1).trim()
 
-      const fen = parts.slice(1).join(" ")
+    // check if pawn exists
+    if(!fen.includes("p") && !fen.includes("P")){
+      return   // skip this row
+    }
 
-      if(removePawn){
+    const newFen = removePawns(fen)
 
-        if(!hasPawn(fen)) return   // ignore if no pawns
-
-        const newFen = removePawns(fen)
-
-        result.push({
-          id,
-          fen:newFen
-        })
-
-      }
-
+    result.push({
+      id,
+      fen: newFen
     })
 
-    setRows(result)
+  })
 
-  }
+  setRows(result)
+
+}
 
   return(
 
